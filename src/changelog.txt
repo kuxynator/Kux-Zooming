@@ -1,0 +1,11 @@
+---------------------------------------------------------------------------------------------------
+Version: 1.0.0
+Date: 2020.08.29
+  Info:
+    - Created for Factorio 1.0
+    - completely based on https://mods.factorio.com/mod/ZoomingReinvented
+  Locale:
+    - English
+  License:
+    - MIT
+---------------------------------------------------------------------------------------------------
