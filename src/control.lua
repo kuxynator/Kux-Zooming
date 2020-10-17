@@ -1,128 +1,193 @@
-local player_memory = require("player_memory")
-local mod_settings = require("mod_settings")
-local zoom_calculator = require("zoom_calculator")
-local map_zoom_out_disabler = require("map_zoom_out_disabler")
-local binoculars_controler = require("binoculars_controler")
+print("__Kux-Zooming__/control.lua")
+modules = {}
+local playerMemory = require("module/playerMemory")
+local modSettings = require("module/modSettings")
+local zoomCalculator = require("module/zoomCalculator")
+local binoculars_controler = require("module/binoculars_controler")
+local constants = require("constants")
+local debug = require("lib/debug")
+local interface = require("module/interface")
 
+if script.active_mods["gvv"] then require("__gvv__.gvv")() end
+interface.register()
 
+local function syncZoomLevel(player)
+    local zoomLevel = nil
+    local lastRenderModee = playerMemory.getLastRenderMode(player)
+    local wasInSync = nil
 
-script.on_event(defines.events.on_runtime_mod_setting_changed, function(event)
-    local player = game.players[event.player_index]
-    mod_settings.validate_and_fix(player)
-end)
-
-
-
-local function try_zoom_in(player, tick)
-    -- prevents double-zoom-in when user has the same key assigned to both actions (in such case both events have the same tick)
-    if tick == player_memory.get_last_zoom_in_tick(player) then
-        return
+    if player.render_mode == 1 and lastRenderModee ~= 1 then
+        zoomLevel = playerMemory.getLastGameZoomLevel(player)
+        --debug.trace("getLastGameZoomLevel: ",playerMemory.getLastGameZoomLevel(player))
+        wasInSync = false
+    elseif player.render_mode ~= 1 and lastRenderModee == 1 then
+        zoomLevel = playerMemory.getLastChartZoomLevel(player)
+        if zoomLevel > constants.BaseMapWorldThreshold then zoomLevel = constants.BaseMapWorldThreshold end
+        --debug.trace("getLastChartZoomLevel: ",playerMemory.getLastChartZoomLevel(player))
+        wasInSync = false
     else
-        player_memory.set_last_zoom_in_tick(player, tick);
+        zoomLevel = playerMemory.getCurrentZoomLevel(player)zoomLevel = playerMemory.getCurrentZoomLevel(player)
+        wasInSync = true
     end
 
-    if player.render_mode == defines.render_mode.game or player.render_mode == defines.render_mode.chart_zoomed_in then
-        player.zoom = zoom_calculator.calculate_zoomed_in_level(player)
-    else
-        zoom_calculator.update_current_zoom_by_user_zooming_in_on_the_map(player)
-        map_zoom_out_disabler.disable(player)
+	if wasInSync == false then
+		playerMemory.setHasMapMoved(player, true) -- maybe not moved but no warranty, so we set it to true
+        playerMemory.setCurrentZoomLevel(player, zoomLevel)
+        debug.trace("zoomLevel: ",zoomLevel," (",player.render_mode,"<",playerMemory.getLastRenderMode(player),")")
     end
+
+    return zoomLevel
 end
 
+local function zoomIn(player, tick)
+    -- prevents double-zoom-in when user has the same key assigned to both actions (in such case both events have the same tick)
+    if tick == playerMemory.getLastZoomInTick(player) then return
+    else playerMemory.setLastZoomInTick(player, tick) end
+
+    local zoomLevel = syncZoomLevel(player)
+    local renderMode = player.render_mode
+
+	if player.render_mode == defines.render_mode.game then	
+        zoomLevel = zoomCalculator.calculateZoomedInLevel(player)
+        player.zoom = zoomLevel
+        debug.trace("zoomLevel: "..zoomLevel)
+		--player.character_running_speed_modifier = 1 / zoomLevel
+	else
+		zoomLevel = zoomCalculator.updateCurrentZoom_ByUserZoomingInOnMap(player)
+        --player.open_map(playerMemory.getLastKnownMapPosition(player), zoomLevel)
+        debug.trace("zoomLevel: "..zoomLevel)
+        --player.character_running_speed_modifier = 1 / zoomLevel
+    end
+
+    playerMemory.setLastRenderMode(player, renderMode)
+    if renderMode == defines.render_mode.game then
+        playerMemory.setLastGameZoomLevel(player, zoomLevel)
+    else
+        playerMemory.setLastChartZoomLevel(player, zoomLevel)
+	end
+	interface.onZoomFactorChanged_raise(player, zoomLevel, renderMode)
+end
+
+local function zoomOut(player, tick)
+    --debug.trace("ZoomingReinvented_alt-zoom-out");
+
+    local zoomLevel = syncZoomLevel(player)
+    local renderMode = player.render_mode
+
+    local shouldSwitchBackToMap = zoomCalculator.getShouldSwitchBackToMap(player)
+    local zoomLevel = 1
+
+--[[
+    if shouldSwitchBackToMap then
+            local mapZoomLevel = zoomCalculator.calculateZoomOut_backToMapView(player)
+            player.open_map(playerMemory.getLastKnownMapPosition(player), mapZoomLevel)
+        return
+    end
+]]--
+    if player.render_mode == defines.render_mode.game then
+        zoomLevel = zoomCalculator.calculateZoomedOutLevel(player)
+		player.zoom = zoomLevel		
+        debug.trace("zoomLevel: "..zoomLevel)
+		--player.character_running_speed_modifier = 1 / zoomLevel
+	else
+		zoomLevel = zoomCalculator.updateCurrentZoom_ByUserZoomingOutOnMap(player)
+        --zoomLevel = zoomCalculator.calculateZoomedOutLevel(player)
+        --player.open_map(playerMemory.getLastKnownMapPosition(player), zoomLevel)
+        debug.trace("zoomLevel: "..zoomLevel)
+    end
+
+    playerMemory.setLastRenderMode(player, renderMode)
+    if renderMode == defines.render_mode.game then
+        playerMemory.setLastGameZoomLevel(player, zoomLevel)
+    else
+        playerMemory.setLastChartZoomLevel(player, zoomLevel)
+	end
+	interface.onZoomFactorChanged_raise(player, zoomLevel, renderMode)
+end
+
+local function toggleMap(player)
+    local zoomLevel = playerMemory.getCurrentZoomLevel(player)
+    local renderMode = player.render_mode
+
+    if player.render_mode == defines.render_mode.game then
+        playerMemory.setLastGameZoomLevel(player, zoomLevel) -- store current zoom level
+
+        -- toggle to map
+        zoomLevel = zoomCalculator.calculateOpenMapZoomLevel(player)
+        player.open_map(player.position, zoomLevel)
+        renderMode = defines.render_mode.chart
+        playerMemory.setLastKnownMapPosition(player, player.position)
+        playerMemory.setLastChartZoomLevel(player, zoomLevel)
+
+        debug.trace("zoomLevel: "..zoomLevel.." map")
+    else
+        playerMemory.setLastChartZoomLevel(player, zoomLevel) -- store current zoom level
+
+        -- toogle to game
+        player.close_map()
+        renderMode = defines.render_mode.game
+        zoomLevel = 1
+        player.zoom = zoomLevel
+        playerMemory.setLastGameZoomLevel(player, zoomLevel)
+
+        debug.trace("zoomLevel: "..zoomLevel.." game")
+        --player.character_running_speed_modifier = 1
+    end
+    playerMemory.setCurrentZoomLevel(player, zoomLevel)
+	playerMemory.setLastRenderMode(player, renderMode)
+	interface.onZoomFactorChanged_raise(player, zoomLevel, renderMode)
+end
+
+-------------------------------------------------------------------------------
+
+script.on_event("ZoomingReinvented_alt-zoom-out", function(event)
+    zoomOut(game.players[event.player_index], event.tick)
+end)
+
 script.on_event("ZoomingReinvented_zoom-in", function(event)
-    local player = game.players[event.player_index]
-    try_zoom_in(player, event.tick)
+    zoomIn(game.players[event.player_index], event.tick)
 end)
 
 script.on_event("ZoomingReinvented_alt-zoom-in", function(event)
-    local player = game.players[event.player_index]
-    try_zoom_in(player, event.tick)
+    zoomIn(game.players[event.player_index], event.tick)
 end)
-
-
-
-script.on_event("ZoomingReinvented_alt-zoom-out", function(event)
-    local player = game.players[event.player_index]
-
-    local should_switch_back_to_map = zoom_calculator.should_switch_back_to_map(player)
-
-    if should_switch_back_to_map then
-        if map_zoom_out_disabler.is_enabled(player) then
-            local map_zoom_level = zoom_calculator.calculate_zoom_out_back_to_map_view(player)
-            player.open_map(player_memory.get_last_known_map_position(player), map_zoom_level)
-        end
-        return
-    end
-
-    if player.render_mode == defines.render_mode.chart then
-        if map_zoom_out_disabler.is_enabled(player) then
-            local zoom_level = zoom_calculator.calculate_zoomed_out_level(player)
-            player.open_map(player_memory.get_last_known_map_position(player), zoom_level)
-        end
-    else
-        local zoom_level = zoom_calculator.calculate_zoomed_out_level(player)
-        player.zoom = zoom_level
-    end
-end)
-
-
 
 script.on_event("ZoomingReinvented_toggle-map", function(event)
-    local player = game.players[event.player_index]
-
-    if player.render_mode == defines.render_mode.game then
-        local zoom_level = zoom_calculator.calculate_open_map_zoom_level(player)
-        player.open_map(player.position, zoom_level)
-        player_memory.set_last_known_map_position(player, player.position)
-    else
-        player.close_map()
-        player.zoom = 1
-        player_memory.set_current_zoom_level(player, 1)
-        map_zoom_out_disabler.enable(player)
-    end
+    toggleMap(game.players[event.player_index])
 end)
-
-
 
 script.on_event(defines.events.on_selected_entity_changed, function(event)
-    local player = game.players[event.player_index]
+	--print("on_selected_entity_changed")
+	local player = game.get_player(event.player_index)
+	--print("on_selected_entity_changed "..tostring(player).." "..tostring(event.player_index))
     if player.render_mode == defines.render_mode.chart_zoomed_in and player.selected then
-        player_memory.set_last_known_map_position(player, player.selected.position)
-    end
-    if player.selected then
-        map_zoom_out_disabler.enable(player)
+        playerMemory.setLastKnownMapPosition(player, player.selected.position)
     end
 end)
-
-
 
 script.on_event("ZoomingReinvented_quick-zoom-in", function(event)
     local player = game.players[event.player_index]
-    local zoom_level = mod_settings.get_max_world_zoom_out(player)
+    local zoomLevel = modSettings.getMaxWorldZoomOut(player)
 
     if player.render_mode == defines.render_mode.chart_zoomed_in and not player.selected then
-       player.zoom = zoom_level
+       player.zoom = zoomLevel
     else
         -- if player selected something, then last_known_map_position has been already updated to its position
-        player.zoom_to_world(player_memory.get_last_known_map_position(player), zoom_level)
+        player.zoom_to_world(playerMemory.getLastKnownMapPosition(player), zoomLevel)
     end
 
-    player_memory.set_current_zoom_level(player, zoom_level)
-    map_zoom_out_disabler.enable(player)
+    playerMemory.setCurrentZoomLevel(player, zoomLevel)
 end)
 
 script.on_event("ZoomingReinvented_quick-zoom-out", function(event)
     local player = game.players[event.player_index]
-    local zoom_level = mod_settings.get_quick_zoom_out_zoom_level(player)
+    local zoom_level = modSettings.getQuickZoomOutZoomLevel(player)
 
     player.open_map({0, 0}, zoom_level)
 
     -- do not reset last_known_map_position to allow to use quick-zoom-in to go back to it
-    player_memory.set_current_zoom_level(player, zoom_level)
-    map_zoom_out_disabler.enable(player)
+    playerMemory.setCurrentZoomLevel(player, zoom_level)
 end)
-
-
 
 script.on_event(defines.events.on_player_used_capsule, function(event)
     if event.item.name == "ZoomingReinvented_binoculars" then
@@ -131,29 +196,64 @@ script.on_event(defines.events.on_player_used_capsule, function(event)
     end
 end)
 
-
-
 script.on_event("ZoomingReinvented_move-down", function(event)
     local player = game.players[event.player_index]
-    map_zoom_out_disabler.disable(player)
+    if(player.render_mode ~= defines.render_mode.game) then
+        playerMemory.setHasMapMoved(player, true)
+    end
 end)
 
 script.on_event("ZoomingReinvented_move-left", function(event)
     local player = game.players[event.player_index]
-    map_zoom_out_disabler.disable(player)
+    if(player.render_mode ~= defines.render_mode.game) then
+        playerMemory.setHasMapMoved(player, true)
+    end
 end)
 
 script.on_event("ZoomingReinvented_move-right", function(event)
     local player = game.players[event.player_index]
-    map_zoom_out_disabler.disable(player)
+    if(player.render_mode ~= defines.render_mode.game) then
+        playerMemory.setHasMapMoved(player, true)
+    end
 end)
 
 script.on_event("ZoomingReinvented_move-up", function(event)
     local player = game.players[event.player_index]
-    map_zoom_out_disabler.disable(player)
+    if(player.render_mode ~= defines.render_mode.game) then
+        playerMemory.setHasMapMoved(player, true)
+    end
 end)
 
 script.on_event("ZoomingReinvented_drag-map", function(event)
     local player = game.players[event.player_index]
-    map_zoom_out_disabler.disable(player)
+    if(player.render_mode ~= defines.render_mode.game) then
+        playerMemory.setHasMapMoved(player, true)
+    end
+end)
+
+
+
+-- This is called once when a new save game is created 
+-- or once when a save file is loaded that previously didn't contain the mod. 
+-- This is always called before other event handlers 
+-- and is meant for setting up initial values that a mod will use for its lifetime.
+script.on_init(function ()
+    --game.print("on_init")
+end)
+
+-- This is called every time a save file is loaded 
+-- *except* for the instance when a mod is loaded into a save file that it previously wasn't part of. 
+-- Additionally this is called when connecting to any other game in a multiplayer session and should never change the game state.
+script.on_load(function ()
+    --game.print("on_load")
+end)
+script.on_nth_tick(60, function(tickEvent)
+	script.on_nth_tick(nil)
+	-- game.print("Start")
+end)
+
+script.on_event(defines.events.on_runtime_mod_setting_changed, function(event)
+	if event.player_index == nil then return end -- changed by a script
+	modSettings.validateAndFix(game.players[event.player_index])
+	debug.onSettingsChanged()
 end)

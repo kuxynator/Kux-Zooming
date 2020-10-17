@@ -1,6 +1,31 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.2.3
+Date: 2020-10-17
+  Scripting:
+    - now each mod must register the callback again after load.
+  Bugfixes:
+    - dont store callback registrations permanent in 'gloabals'. 
+---------------------------------------------------------------------------------------------------
+Version: 1.2.1
+Date: 2020-10-04
+  Bugfixes:
+    - FIX for control.lua:252: bad argument #3 of 3 to 'index' (string expected, got nil)
+---------------------------------------------------------------------------------------------------
+Version: 1.2.0
+Date: 2020-10-01
+  Features:
+    - add a remote interface
+---------------------------------------------------------------------------------------------------
+Version: 1.1.0
+Date: 2020-09-29
+  Changes:
+    - option to disable zoom out removed
+    - zooming in map uses the default game behavior
+  Info:
+    - code base refactored
+---------------------------------------------------------------------------------------------------
 Version: 1.0.0
-Date: 2020.08.29
+Date: 2020-08-29
   Info:
     - Created for Factorio 1.0
     - completely based on https://mods.factorio.com/mod/ZoomingReinvented
@@ -8,4 +33,3 @@ Date: 2020.08.29
     - English
   License:
     - MIT
----------------------------------------------------------------------------------------------------

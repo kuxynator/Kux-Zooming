@@ -1,0 +1,12 @@
+{
+    "Lua.diagnostics.globals": [
+		"defines",
+		"script",
+		"global",
+		"game",
+		"settings",
+		"global",
+		"remote",
+		"modules"
+	]
+}

@@ -1,7 +1,48 @@
 # Factorio-Zooming-Reinvented
-#### For Factorio 1.0
-Factorio mod that improves zooming controls
 
+# Rewrite Version 1.x
+
+- The main reason was the zoom in the map view. 
+**Now it does not jump back to the player position any more.** 
+Unfortunately this had to be paid with a compromise, the zoom behaviour is now like in the original game. The zoom sensitivity cannot be changed and is fixed at 1.25. The zoom limit are the limits from the game. 
+
+- In world view the Zoom sensitivity can be set and the minimum and maximum zoom factor can be configured.
+
+I will test the new behavior a while and then implement some new (resp. changed) features.
+- restore last used zoomfactor in worl or map view *optional*
+- shortcuts to zoom out to speciefic zoomlevels
+- larger zoom steps in map view (but only on players position, thrue restrictions of the modding API)
+- wider zoom limits (with the compromis, this works only at players position)
+
+## Remote interface for mod developer (v1.2.0)
+
+Interface: "Kux-Zooming"
+- `getZoomFactor(playerIndex)`
+	Gets the current zoom factor of the specified player index
+- `onZoomFactorChanged_add(interfaceName, functionName)`
+	- interfaceName: the name of your interface
+	- functionName: the name of your function
+	Adds an callback which is called when any players zoom factor has changed
+- `onZoomFactorChanged_remove(interfaceName, functionName)`
+	Removes the callback
+
+Example:
+```lua
+local kuxZoomingCallback = {
+	onZoomFactorChanged = function(event)
+		game.players[event.playerIndex].print(event.zoomFactor..", "..event.renderMode)
+	end,	
+}
+remote.register("MyMod_kuxZoomingCallback", kuxZoomingCallback)
+remote.call("Kux-Zooming","onZoomFactorChanged_add", "MyMod_kuxZoomingCallback", "onZoomFactorChanged")
+```
+# Republished Version 1.0.0 
+
+republished for Factorio 1.0
+
+All credits to [jarcionek](https://mods.factorio.com/user/jarcionek) and his mod [Zooming Reinvented](https://mods.factorio.com/mod/ZoomingReinvented)
+
+Following the original mod description
 
 # Short description
 

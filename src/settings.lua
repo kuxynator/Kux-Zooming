@@ -7,7 +7,7 @@ data:extend({
         maximum_value = 5.0,
         minimum_value = 1.01,
         order = "01"
-    },
+	},
     {
         type = "double-setting",
         name = "ZoomingReinvented_max-world-zoom-out",
@@ -51,9 +51,9 @@ data:extend({
         default_value = false,
         order = "06"
     },
-    {
+	{
         type = "bool-setting",
-        name = "ZoomingReinvented_disable-map-zoom-out",
+        name = "ZoomingReinvented_debug",
         setting_type = "runtime-per-user",
         default_value = false,
         order = "07"
