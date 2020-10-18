@@ -1,10 +1,10 @@
 {
   "name": "Kux-Zooming",
-  "version": "1.2.3",
+  "version": "1.2.6",
   "factorio_version": "1.0",
   "title": "Zooming Reinvented",
   "author": "Kuxynator",
-  "description": "This mod allows to heavily customise the zooming behaviour, in particular it allows to:\n - change how far you can zoom out (and still see the world)\n - change how aggressive the zooming is (equivalent to changing mouse wheel sensitivity)\n - change at what position and zoom level the map opens\n - zoom in or out instantly with a single key stroke\nSee homepage/mod portal/readme for a full explanation of how this mod works. Please report any bugs and usability issues you find to help make this mod better - your feedback is much appreciated. Based on Zooming Reinvented by Jarcionek",
+  "description": "This mod allows to customise the zooming behaviour, in particular it allows to:\n - change how far you can zoom out (and still see the world)\n - change how aggressive the zooming is (equivalent to changing mouse wheel sensitivity)\n - change at what position and zoom level the map opens\n - zoom in or out instantly with a single key stroke\nSee homepage/mod portal/readme for a full explanation of how this mod works. Please report any bugs and usability issues you find to help make this mod better - your feedback is much appreciated. \nBased on Zooming Reinvented by Jarcionek",
   "homepage": "https://fb.me/kuxynator.factorio",
   "dependencies": [ "base >= 1.0.0" ]
 }

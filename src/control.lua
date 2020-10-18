@@ -1,15 +1,13 @@
-print("__Kux-Zooming__/control.lua")
 modules = {}
-local playerMemory = require("module/playerMemory")
-local modSettings = require("module/modSettings")
-local zoomCalculator = require("module/zoomCalculator")
+local playerMemory         = require("module/playerMemory")
+local modSettings          = require("module/modSettings")
+local zoomCalculator       = require("module/zoomCalculator")
 local binoculars_controler = require("module/binoculars_controler")
-local constants = require("constants")
-local debug = require("lib/debug")
-local interface = require("module/interface")
+local constants            = require("constants")
+local debug                = require("lib/debug")
+local interface            = require("module/interface")
 
 if script.active_mods["gvv"] then require("__gvv__.gvv")() end
-interface.register()
 
 local function syncZoomLevel(player)
     local zoomLevel = nil
@@ -238,15 +236,23 @@ end)
 -- This is always called before other event handlers 
 -- and is meant for setting up initial values that a mod will use for its lifetime.
 script.on_init(function ()
-    --game.print("on_init")
+	--game.print("on_init")
+	interface.onInit()
 end)
 
 -- This is called every time a save file is loaded 
 -- *except* for the instance when a mod is loaded into a save file that it previously wasn't part of. 
 -- Additionally this is called when connecting to any other game in a multiplayer session and should never change the game state.
 script.on_load(function ()
-    --game.print("on_load")
+	--game.print("on_load")
+	interface.onLoad()
 end)
+
+script.on_configuration_changed(function ()
+	--game.print("on_load")
+	interface.onConfigurationChanged()
+end)
+
 script.on_nth_tick(60, function(tickEvent)
 	script.on_nth_tick(nil)
 	-- game.print("Start")

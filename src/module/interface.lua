@@ -1,10 +1,45 @@
 local playerMemory = require("module/playerMemory")
-local callbacks = {}
+local callbacks = nil
+
 --- Interface module
 -- @module interface
 modules.interface = {
 	--- the name of the provided interface
 	interfaceName = "Kux-Zooming",
+
+	onInit = function()
+		--print("onInit")
+		callbacks = {}
+		modules.interface.register()
+	end,
+
+	onLoad = function()
+		--print("onLoad")
+		-- REMEMBER Do not change game state! not availabe are
+		callbacks = global.callbacks or {}
+		modules.interface.register()
+	end,
+
+	onConfigurationChanged=function ()
+		--[[
+		callbacks = global.callbacks or {}
+		-- migrate from old format
+		for e,callbackRegistrations in pairs(callbacks) do
+			for k, v in pairs(callbackRegistrations) do -- ERROR invalid key to 'next' ???
+				if type(v) == "table" then --  {functionName = "ffff", interfaceName = "iiii"}
+					callbackRegistrations[k] = nil
+					callbackRegistrations[v.interfaceName] = v.functionName
+				end
+			end
+		end
+		]]
+		callbacks = {} -- clear all registrations
+	end,
+
+	--- registers this interface
+	register = function()
+		remote.add_interface(modules.interface.interfaceName, modules.interface.functions)
+	end,
 
 	--- provided interface functions
 	functions = {
@@ -31,14 +66,17 @@ modules.interface = {
 		onZoomFactorChanged_add = function(interfaceName, functionName)
 			callbacks.onZoomFactorChanged = callbacks.onZoomFactorChanged or {}
 			callbacks.onZoomFactorChanged[interfaceName] = functionName
+			local count = 0
+			for _ in pairs(callbacks.onZoomFactorChanged) do count = count + 1 end
+			global.callbacks = callbacks
 		end,
 
 		--- remove callback
-		--@param interfaceName  The name of the interface to be remove [string]
-		--@param functionName   The name of the function to be remove [string]
-		onZoomFactorChanged_remove = function(interfaceName, functionName)
+		--@param interfaceName  The name of the interface to be removed [string]
+		onZoomFactorChanged_remove = function(interfaceName)
 			callbacks.onZoomFactorChanged = callbacks.onZoomFactorChanged or {}
 			callbacks.onZoomFactorChanged[interfaceName] = nil
+			global.callbacks = callbacks
 		end,
 	},
 
@@ -51,20 +89,21 @@ modules.interface = {
 
 		local eventArgs = {
 			playerIndex = player.index,
-			zoomFactor = zoomFactor,
-			renderMode = renderMode
+			zoomFactor  = zoomFactor,
+			renderMode  = renderMode
 		}
+
 		for interfaceName,functionName in pairs(callbacks.onZoomFactorChanged) do
 			if functionName == nil then goto next end
-			remote.call(interfaceName, functionName, eventArgs)
+			local f = function() remote.call(interfaceName, functionName, eventArgs) end
+			local status, ex = pcall(f)
+			if not status then
+				callbacks[interfaceName] = nil
+				print("Kux-Zooming: ERROR callback interface not fond. Registration removed. interface: '"..interfaceName.."', function: '"..functionName.."'" )
+			end
 			::next::
 		end
 	end,
-
-	--- registers this interface
-	register = function()
-		remote.add_interface(modules.interface.interfaceName, modules.interface.functions)
-	end
 }
 
 return modules.interface

@@ -1,6 +1,6 @@
-local constants = require("constants")
+local constants    = require("constants")
 local playerMemory = require("module/playerMemory")
-local modSettings = require("module/modSettings")
+local modSettings  = require("module/modSettings")
 
 --- Zoom calculator module
 -- @module zoomCalculator

@@ -19,22 +19,22 @@ local function getDefaultValues(player)
 end
 
 local function getPlayerMemory(player)
-    global.playerMemory = global.playerMemory or {}
-    local default = getDefaultValues(player)getDefaultValues(player);
-    local m = global.playerMemory[player.index] or default
-    m.player = player    
+    global.playerMemoryTable = global.playerMemoryTable or {}
+    local default = getDefaultValues(player)
+    local pm = global.playerMemoryTable[player.index] or default
+    pm.player = player
 
     -- migrate new fields
-    m.lastKnownMapPosition = m.lastKnownMapPosition or default.lastKnownMapPosition
-    m.currentZoom          = m.currentZoom          or default.currentZoom
-    m.lastZoomInTick       = m.lastZoomInTick       or default.lastZoomInTick
-    m.lastRenderMode       = m.lastRenderMode       or default.lastRenderMode
-    m.lastGameZoomLevel    = m.lastGameZoomLevel    or default.lastGameZoomLevel
-    m.lastChartZoomLevel   = m.lastChartZoomLevel   or default.lastChartZoomLevel
-    m.hasMapMoved          = m.hasMapMoved          or default.hasMapMoved
+    pm.lastKnownMapPosition = pm.lastKnownMapPosition or default.lastKnownMapPosition
+    pm.currentZoom          = pm.currentZoom          or default.currentZoom
+    pm.lastZoomInTick       = pm.lastZoomInTick       or default.lastZoomInTick
+    pm.lastRenderMode       = pm.lastRenderMode       or default.lastRenderMode
+    pm.lastGameZoomLevel    = pm.lastGameZoomLevel    or default.lastGameZoomLevel
+    pm.lastChartZoomLevel   = pm.lastChartZoomLevel   or default.lastChartZoomLevel
+    pm.hasMapMoved          = pm.hasMapMoved          or default.hasMapMoved
 
-    global.playerMemory[player.index] = m;
-    return m
+    global.playerMemoryTable[player.index] = pm;
+    return pm
 end
 
 -------------------------------------------------------------------------------
