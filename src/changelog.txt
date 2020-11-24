@@ -1,4 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.2.8
+Date: 2020-10-20
+  Bugfixes:
+    - MP event re-registration
+---------------------------------------------------------------------------------------------------
+Version: 1.2.7
+Date: 2020-10-20
+  Optimizations:
+    - catch the error on calling remote interface and and log it to the log file and print on users screen. does not crash the game anymore
+---------------------------------------------------------------------------------------------------
 Version: 1.2.6
 Date: 2020-10-20
   Bugfixes:

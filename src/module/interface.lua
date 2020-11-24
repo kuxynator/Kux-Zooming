@@ -98,8 +98,9 @@ modules.interface = {
 			local f = function() remote.call(interfaceName, functionName, eventArgs) end
 			local status, ex = pcall(f)
 			if not status then
-				callbacks[interfaceName] = nil
-				print("Kux-Zooming: ERROR callback interface not fond. Registration removed. interface: '"..interfaceName.."', function: '"..functionName.."'" )
+				callbacks.onZoomFactorChanged[interfaceName] = nil
+				print("Kux-Zooming: ERROR callback failed. Registration removed. interface: '"..interfaceName.."', function: '"..functionName.."'\nException: "..ex )
+				game.print("The mod caused a error.\nPlease report this error to the mod author (not Kux-Zooming).\n\n"..ex ,{1,0.5,0.5})
 			end
 			::next::
 		end

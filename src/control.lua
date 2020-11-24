@@ -253,10 +253,15 @@ script.on_configuration_changed(function ()
 	interface.onConfigurationChanged()
 end)
 
+--[[
+-- MP ERROR
+-- mod-Kux-Zooming was not registered for the following nth_ticks when
+-- the map was saved but has registered them as a result of loading: 60
 script.on_nth_tick(60, function(tickEvent)
 	script.on_nth_tick(nil)
 	-- game.print("Start")
 end)
+]]
 
 script.on_event(defines.events.on_runtime_mod_setting_changed, function(event)
 	if event.player_index == nil then return end -- changed by a script
